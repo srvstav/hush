@@ -1,7 +1,7 @@
 // Thin UI over the engine. All the interesting parts live in src/core.
 // Rule here: user-supplied strings only ever go through textContent, never innerHTML.
 
-import { Parley } from './src/core/engine.js';
+import { Psst } from './src/core/engine.js';
 import { generatePassphrase } from './src/core/room.js';
 import { WebSocketTransport } from './src/transport/websocket.js';
 import { TabsTransport } from './src/transport/tabs.js';
@@ -14,7 +14,7 @@ const el = (tag, props = {}, ...kids) => {
 };
 const fmtBytes = (n) => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KiB` : n < 1073741824 ? `${(n / 1048576).toFixed(1)} MiB` : `${(n / 1073741824).toFixed(2)} GiB`;
 
-let parley = null;
+let psst = null;
 const rows = new Map();   // message id → <li>
 const drafts = new Map(); // peer id → { text, timer } — what they're typing right now
 const REACTIONS = ['👍', '😂', '😮', '❤️', '🍕'];
@@ -24,7 +24,7 @@ const fileRows = new Map(); // fileId → { li, bar, label }
 
 const fromHash = new URLSearchParams(location.hash.slice(1)).get('room');
 $('#pass').value = fromHash ?? '';
-$('#name').value = localStorageGet('parley:name') ?? '';
+$('#name').value = localStorageGet('psst:name') ?? '';
 $('#gen').onclick = () => { $('#pass').value = generatePassphrase(); };
 $('#relay').onchange = () => { $('#relay-url').hidden = $('#relay').value !== 'custom'; };
 
@@ -40,11 +40,11 @@ $('#join-form').onsubmit = async (e) => {
   $('#join-btn').disabled = true;
   try {
     status.textContent = 'stretching the passphrase (600k PBKDF2 rounds)…';
-    localStorageSet('parley:name', $('#name').value);
-    parley = new Parley({ transport: makeTransport(), passphrase: $('#pass').value, name: $('#name').value || 'anon' });
-    wire(parley);
+    localStorageSet('psst:name', $('#name').value);
+    psst = new Psst({ transport: makeTransport(), passphrase: $('#pass').value, name: $('#name').value || 'anon' });
+    wire(psst);
     const pass = $('#pass').value;
-    const { roomId } = await parley.join();
+    const { roomId } = await psst.join();
     history.replaceState(null, '', `#room=${encodeURIComponent(pass)}`);
     $('#room-id').textContent = roomId.slice(0, 8);
     $('#gate').hidden = true;
@@ -53,7 +53,7 @@ $('#join-form').onsubmit = async (e) => {
     $('#text').focus();
   } catch (err) {
     status.textContent = err.message;
-    parley = null;
+    psst = null;
   } finally {
     $('#join-btn').disabled = false;
   }
@@ -80,7 +80,7 @@ function wire(p) {
   p.on('file-failed', ({ fileId, reason }) => { const r = fileRows.get(fileId); if (r) r.label.textContent = `failed: ${reason}`; });
   p.on('relay-error', ({ message }) => sys(`relay: ${message}`));
   p.on('disconnected', ({ reason }) => sys(`disconnected: ${reason}`));
-  p.on('warning', (w) => console.warn('[parley]', w));
+  p.on('warning', (w) => console.warn('[psst]', w));
   p.on('draft', ({ from, active, text }) => {
     clearTimeout(drafts.get(from)?.timer);
     if (!active) drafts.delete(from);
@@ -91,14 +91,14 @@ function wire(p) {
 
 function renderPeers() {
   const list = $('#peers');
-  list.replaceChildren(...[...parley.peers.values()].map((p) => el('li', {},
+  list.replaceChildren(...[...psst.peers.values()].map((p) => el('li', {},
     el('div', { textContent: `${p.name ?? '…'}${p.ready ? '' : ' (handshaking)'}` }),
     el('div', { className: 'words', textContent: p.safetyWords?.join(' · ') ?? '' }),
     drafts.has(p.id) ? el('div', { className: 'draft', textContent: drafts.get(p.id).text ? `✎ ${drafts.get(p.id).text}` : '✎ typing…' }) : null)));
-  if (!parley.peers.size) list.replaceChildren(el('li', { className: 'hint', textContent: 'nobody else here yet' }));
+  if (!psst.peers.size) list.replaceChildren(el('li', { className: 'hint', textContent: 'nobody else here yet' }));
 }
 
-const nameOf = (id) => id === parley.me ? 'you' : parley.peers.get(id)?.name ?? 'someone';
+const nameOf = (id) => id === psst.me ? 'you' : psst.peers.get(id)?.name ?? 'someone';
 
 function sys(text) { scrollAppend(el('li', { className: 'sys', textContent: text })); }
 
@@ -115,7 +115,7 @@ function renderMessage(m) {
   li.replaceChildren(el('div', { className: 'who', textContent: `${nameOf(m.from)} · ${m.kind === 'text' ? m.tone : m.kind}` }), bodyFor(m), footFor(m));
   if (!rows.has(m.id)) { rows.set(m.id, li); scrollAppend(li); }
   // Burnable messages count as seen when revealed; everything else when it's on a visible screen.
-  if (!m.mine && !m.burn && document.visibilityState === 'visible') parley.markSeen(m.id);
+  if (!m.mine && !m.burn && document.visibilityState === 'visible') psst.markSeen(m.id);
 }
 
 function footFor(m) {
@@ -123,17 +123,17 @@ function footFor(m) {
   const foot = el('div', { className: 'foot' });
   const counts = new Map();
   for (const { emoji } of m.reactions) counts.set(emoji, (counts.get(emoji) ?? 0) + 1);
-  const mineR = m.reactions.find((r) => r.from === parley.me)?.emoji;
+  const mineR = m.reactions.find((r) => r.from === psst.me)?.emoji;
   for (const e of REACTIONS) {
     const n = counts.get(e) ?? 0;
     const b = el('button', { className: `react${mineR === e ? ' on' : ''}${n ? ' has' : ''}`, textContent: n ? `${e}${n}` : e, type: 'button' });
-    b.onclick = () => parley.react(m.id, mineR === e ? null : e);
+    b.onclick = () => psst.react(m.id, mineR === e ? null : e);
     foot.append(b);
   }
   if (m.mine) {
     if (m.seenBy.length) foot.append(el('span', { className: 'seen', textContent: `seen by ${m.seenBy.map(nameOf).join(', ')}` }));
     const un = el('button', { className: 'react', textContent: 'unsay', type: 'button' });
-    un.onclick = () => parley.unsay(m.id);
+    un.onclick = () => psst.unsay(m.id);
     foot.append(un);
   }
   return foot;
@@ -147,7 +147,7 @@ function bodyFor(m) {
   if (m.kind === 'riddle' && m.state === 'locked') {
     const input = el('input', { placeholder: `answer (${m.triesLeft} tries)` });
     const form = el('form', { className: 'row' }, input, el('button', { textContent: 'try' }));
-    form.onsubmit = async (e) => { e.preventDefault(); input.disabled = true; await parley.solve(m.id, input.value); };
+    form.onsubmit = async (e) => { e.preventDefault(); input.disabled = true; await psst.solve(m.id, input.value); };
     return el('div', { className: 'body' }, el('div', { textContent: `🔒 ${m.question}` }), form);
   }
   if (m.kind === 'capsule' && m.state === 'sealed') {
@@ -162,7 +162,7 @@ function bodyFor(m) {
   }
   if (m.burn && !m.mine && !m.burnAt) {
     const s = el('span', { className: 'sealed', textContent: `tap to read — burns ${m.burn}s after` });
-    s.onclick = () => parley.reveal(m.id);
+    s.onclick = () => psst.reveal(m.id);
     return el('div', { className: 'body' }, s);
   }
   const body = el('div', { className: 'body', textContent: m.text ?? '' });
@@ -190,10 +190,10 @@ function renderExtra() {
 let draftTimer = null;
 $('#text').oninput = () => {
   if (draftTimer) return;
-  draftTimer = setTimeout(() => { draftTimer = null; parley.draft($('#text').value, { live: $('#live').checked }).catch(() => {}); }, 120);
+  draftTimer = setTimeout(() => { draftTimer = null; psst.draft($('#text').value, { live: $('#live').checked }).catch(() => {}); }, 120);
 };
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && parley) for (const m of parley.messages.values()) if (!m.burn && m.from !== parley.me) parley.markSeen(m.id);
+  if (document.visibilityState === 'visible' && psst) for (const m of psst.messages.values()) if (!m.burn && m.from !== psst.me) psst.markSeen(m.id);
 });
 
 $('#text').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); } };
@@ -203,15 +203,15 @@ $('#composer').onsubmit = async (e) => {
   if (!text.trim()) return;
   try {
     const m = mode();
-    if (m === 'riddle') await parley.riddle(text, $('#q').value, $('#a').value);
-    else if (m === 'capsule') await parley.capsule(text, { opensInMs: Number($('#mins').value) * 60_000 });
-    else await parley.say(text, { tone: m });
+    if (m === 'riddle') await psst.riddle(text, $('#q').value, $('#a').value);
+    else if (m === 'capsule') await psst.capsule(text, { opensInMs: Number($('#mins').value) * 60_000 });
+    else await psst.say(text, { tone: m });
     $('#text').value = '';
-    parley.draft('').catch(() => {});
+    psst.draft('').catch(() => {});
   } catch (err) { sys(`not sent: ${err.message}`); }
 };
-$('#knock').onclick = () => parley.knock();
-$('#leave').onclick = () => { parley.leave(); history.replaceState(null, '', location.pathname); location.reload(); };
+$('#knock').onclick = () => psst.knock();
+$('#leave').onclick = () => { psst.leave(); history.replaceState(null, '', location.pathname); location.reload(); };
 $('#invite').onclick = async () => { await navigator.clipboard.writeText(location.href); sys('invite link copied. the passphrase is in the #fragment, which browsers never send to servers.'); };
 
 // ── files ───────────────────────────────────────────────────────────────────
@@ -220,11 +220,11 @@ const fileSource = (file) => ({ size: file.size, slice: async (s, e) => new Uint
 
 $('#file').onchange = async (e) => {
   for (const file of e.target.files) {
-    if (!parley.peers.size) { sys('nobody here to send to'); break; }
-    const { fileId } = await parley.sendFile(fileSource(file), { name: file.name, mime: file.type || undefined });
+    if (!psst.peers.size) { sys('nobody here to send to'); break; }
+    const { fileId } = await psst.sendFile(fileSource(file), { name: file.name, mime: file.type || undefined });
     const cancel = el('button', { textContent: 'cancel', type: 'button' });
     fileRow(fileId, `you offered ${file.name} (${fmtBytes(file.size)})`, 'waiting for someone to accept…', el('div', { className: 'row' }, cancel));
-    cancel.onclick = () => { parley.cancelFile(fileId); cancel.remove(); fileRows.get(fileId).label.textContent = 'cancelled'; };
+    cancel.onclick = () => { psst.cancelFile(fileId); cancel.remove(); fileRows.get(fileId).label.textContent = 'cancelled'; };
   }
   e.target.value = '';
 };
@@ -242,10 +242,10 @@ function renderOffer({ fileId, from, name, size, mime }) {
   const decline = el('button', { textContent: 'decline' });
   const actions = el('div', { className: 'row' }, accept, decline);
   fileRow(fileId, `${nameOf(from)} offers ${name} (${fmtBytes(size)})`, 'not downloading', actions);
-  decline.onclick = () => { parley.declineFile(fileId); actions.remove(); fileRows.get(fileId).label.textContent = 'declined'; };
+  decline.onclick = () => { psst.declineFile(fileId); actions.remove(); fileRows.get(fileId).label.textContent = 'declined'; };
   accept.onclick = async () => {
     actions.remove();
-    try { await parley.acceptFile(fileId, await makeSink(name, mime, fileId)); }
+    try { await psst.acceptFile(fileId, await makeSink(name, mime, fileId)); }
     catch (err) { fileRows.get(fileId).label.textContent = `not accepted: ${err.message}`; }
   };
 }

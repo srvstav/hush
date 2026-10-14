@@ -10,8 +10,8 @@ export class TabsTransport {
 
   async open() {
     if (!TabsTransport.supported) throw new Error('this browser has no SharedWorker — use a WebSocket relay instead');
-    const worker = new SharedWorker(new URL('./hub-worker.js', import.meta.url), { type: 'module', name: 'parley-hub' });
-    worker.onerror = (e) => console.error('[parley] hub worker failed', e);
+    const worker = new SharedWorker(new URL('./hub-worker.js', import.meta.url), { type: 'module', name: 'psst-hub' });
+    worker.onerror = (e) => console.error('[psst] hub worker failed', e);
     this.#port = worker.port;
     this.#port.onmessage = ({ data }) => {
       if (data === 'closed') return this.#closed();

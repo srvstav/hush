@@ -1,7 +1,7 @@
-// The Parley engine: one object per room membership. Transport-agnostic, UI-agnostic,
+// The Psst engine: one object per room membership. Transport-agnostic, UI-agnostic,
 // runs the same in a browser tab and in Node.
 //
-//   const p = new Parley({ transport, passphrase, name });
+//   const p = new Psst({ transport, passphrase, name });
 //   p.on('peer', ...); p.on('message', ...); await p.join();
 //   await p.say('hi', { tone: 'whisper' });
 //
@@ -27,7 +27,7 @@ const newId = () => b64u(random(9));
 const isStr = (v, max) => typeof v === 'string' && v.length <= max;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export class Parley extends Emitter {
+export class Psst extends Emitter {
   #transport; #passphrase; #iterations;
   #eph = null;
   #timers = new Set();

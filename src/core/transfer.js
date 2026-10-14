@@ -16,7 +16,7 @@ export const ACK_EVERY = 4;
 export const MAX_FILE = 2 ** 32 * CHUNK_SIZE - 1; // index is u32 — ~1 PiB, effectively unbounded
 
 const nonce = (prefix, i) => concat(prefix, u32(i));
-const aad = (fileId, i, total) => concat(utf8('parley/chunk'), fileId, u32(i), u32(total));
+const aad = (fileId, i, total) => concat(utf8('psst/chunk'), fileId, u32(i), u32(total));
 export const chunkCount = (size) => Math.max(1, Math.ceil(size / CHUNK_SIZE));
 
 export function newFileSecret() {

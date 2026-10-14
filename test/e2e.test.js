@@ -3,7 +3,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startRelay } from '../src/relay/server.js';
 import { WebSocketTransport } from '../src/transport/websocket.js';
-import { Parley, bytesSource } from '../src/core/engine.js';
+import { Psst, bytesSource } from '../src/core/engine.js';
 import { concat, equal, random } from '../src/core/bytes.js';
 import { encodeFrame, decodeFrame } from '../src/core/frame.js';
 
@@ -17,7 +17,7 @@ const next = (p, ev, pred = () => true) => new Promise((ok) => { const off = p.o
 async function room(names, passphrase = 'lantern-otter-quartz-river-violet') {
   const ps = [];
   for (const name of names) {
-    const p = new Parley({ transport: new WebSocketTransport(url), passphrase, name, iterations: ITER });
+    const p = new Psst({ transport: new WebSocketTransport(url), passphrase, name, iterations: ITER });
     // wait until this member has a ready, named session with everyone already there
     const others = ps.length;
     const ready = others === 0 ? Promise.resolve() : new Promise((ok) => {

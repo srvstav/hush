@@ -88,7 +88,7 @@ class Client {
 
   #deliver(frame, from) {
     // Slow consumer: drop and tell the sender instead of buffering unbounded memory.
-    // Parley's own flow control (file acks) keeps well under this in practice.
+    // Psst's own flow control (file acks) keeps well under this in practice.
     if (this.conn.bufferedAmount > this.hub.limits.maxBuffered) return from.#fail('backpressure', `peer ${this.id} is not keeping up`);
     this.conn.send(frame);
   }
