@@ -1,8 +1,8 @@
-# psst
+# hush
 
 ### Talk like nobody's listening. Because nobody is.
 
-## 👉 [**Try it now**](https://srvstav.github.io/psst/) — open it in two tabs.
+## 👉 [**Try it now**](https://srvstav.github.io/hush/) — open it in two tabs.
 
 No account. No phone number. Just a secret phrase you share.
 
@@ -22,4 +22,4 @@ Curious how it works? → [HOW-IT-WORKS.md](HOW-IT-WORKS.md)
 
 ---
 
-### ❤️ Made after learning [srvstav/websockets](https://github.com/srvstav/websockets)
+### Made after learning [srvstav/websockets](https://github.com/srvstav/websockets)

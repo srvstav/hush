@@ -23,7 +23,7 @@ export async function lockRiddle(text, question, answer, iterations = RIDDLE_ITE
   if (!normalizeAnswer(answer)) throw new Error('a riddle needs an answer');
   const salt = random(16), iv = random(12);
   const key = await pbkdf2(normalizeAnswer(answer), salt, iterations, 32);
-  const ct = await seal(key, iv, utf8(text), utf8(`psst/riddle\n${question}`));
+  const ct = await seal(key, iv, utf8(text), utf8(`hush/riddle\n${question}`));
   return { question, iterations, salt: b64u(salt), iv: b64u(iv), ct: b64u(ct) };
 }
 
@@ -32,7 +32,7 @@ export async function solveRiddle(r, answer) {
   const iterations = Math.min(Math.max(r.iterations | 0, 1), 2_000_000);
   const key = await pbkdf2(normalizeAnswer(answer), fromB64u(r.salt), iterations, 32);
   try {
-    return fromUtf8(await open(key, fromB64u(r.iv), fromB64u(r.ct), utf8(`psst/riddle\n${r.question}`)));
+    return fromUtf8(await open(key, fromB64u(r.iv), fromB64u(r.ct), utf8(`hush/riddle\n${r.question}`)));
   } catch {
     return null;
   }
@@ -40,7 +40,7 @@ export async function solveRiddle(r, answer) {
 
 export async function sealCapsule(text) {
   const key = random(32), iv = random(12);
-  const ct = await seal(key, iv, utf8(text), utf8('psst/capsule'));
+  const ct = await seal(key, iv, utf8(text), utf8('hush/capsule'));
   return { capsule: { iv: b64u(iv), ct: b64u(ct), commit: b64u(await sha256(key)) }, key: b64u(key) };
 }
 
@@ -48,5 +48,5 @@ export async function sealCapsule(text) {
 export async function openCapsule(capsule, keyB64) {
   const key = fromB64u(keyB64);
   if (!equal(await sha256(key), fromB64u(capsule.commit))) throw new Error('capsule key does not match commitment');
-  return fromUtf8(await open(key, fromB64u(capsule.iv), fromB64u(capsule.ct), utf8('psst/capsule')));
+  return fromUtf8(await open(key, fromB64u(capsule.iv), fromB64u(capsule.ct), utf8('hush/capsule')));
 }

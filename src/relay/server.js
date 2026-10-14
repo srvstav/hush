@@ -89,5 +89,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const host = process.env.HOST ?? '127.0.0.1';
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean) ?? null;
   const { port: bound } = await startRelay({ port, host, allowedOrigins });
-  console.log(`psst relay on http://${host}:${bound}  (ws at /ws, max frame ${LIMITS.maxFrame} B)`);
+  console.log(`hush relay on http://${host}:${bound}  (ws at /ws, max frame ${LIMITS.maxFrame} B)`);
 }

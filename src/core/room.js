@@ -8,7 +8,7 @@ import { hex, utf8, concat, random } from './bytes.js';
 import { WORDS } from './words.js';
 
 export const ROOM_ITERATIONS = 600_000; // OWASP 2023 guidance for PBKDF2-SHA256
-const SALT = utf8('psst/room/v1');
+const SALT = utf8('hush/room/v1');
 
 export function normalizePassphrase(p) {
   if (typeof p !== 'string') throw new TypeError('passphrase must be a string');
@@ -29,9 +29,9 @@ export const generatePassphrase = (n = 8) => Array.from(random(n), (b) => WORDS[
 export async function pairSecrets(dhOut, psk, lo, hi) {
   const info = (label) => concat(utf8(label), lo, hi);
   const [sk, ad, sas] = await Promise.all([
-    hkdf(dhOut, psk, info('psst/sk'), 32),
-    hkdf(dhOut, psk, info('psst/ad'), 32),
-    hkdf(dhOut, psk, info('psst/sas'), 5),
+    hkdf(dhOut, psk, info('hush/sk'), 32),
+    hkdf(dhOut, psk, info('hush/ad'), 32),
+    hkdf(dhOut, psk, info('hush/sas'), 5),
   ]);
   // Safety words: computed from the shared secret, so a man in the middle gets different words on each side.
   return { sk, ad, safetyWords: Array.from(sas, (b) => WORDS[b]) };

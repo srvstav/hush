@@ -1,5 +1,5 @@
 {
-  "name": "psst",
+  "name": "hush",
   "version": "0.1.0",
   "description": "End-to-end encrypted, ratcheting, file-streaming chat over WebSockets. The relay is treated as the enemy.",
   "type": "module",

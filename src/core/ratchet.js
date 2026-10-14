@@ -14,7 +14,7 @@ const MAX_SKIP = 2000;     // max keys derived for one gap — stops a "n = 2^32
 const MAX_STORED = 4000;   // total skipped keys kept; oldest evicted first
 
 async function kdfRk(rk, dhOut) {
-  const out = await hkdf(dhOut, rk, 'psst/rk', 64);
+  const out = await hkdf(dhOut, rk, 'hush/rk', 64);
   return [out.slice(0, 32), out.slice(32)];
 }
 
@@ -24,7 +24,7 @@ async function kdfCk(ck) {
 }
 
 async function msgKey(mk) {
-  const out = await hkdf(mk, null, 'psst/msg', 44);
+  const out = await hkdf(mk, null, 'hush/msg', 44);
   return [out.slice(0, 32), out.slice(32)];
 }
 

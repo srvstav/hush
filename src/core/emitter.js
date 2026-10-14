@@ -14,7 +14,7 @@ export class Emitter {
 
   emit(event, value) {
     for (const fn of this.#handlers.get(event) ?? []) {
-      try { fn(value); } catch (err) { console.error(`[psst] ${event} handler threw`, err); }
+      try { fn(value); } catch (err) { console.error(`[hush] ${event} handler threw`, err); }
     }
   }
 }

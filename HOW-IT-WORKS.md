@@ -1,4 +1,4 @@
-# How psst works
+# How hush works
 
 End-to-end encrypted group chat over WebSockets, built on one rule: **the server is the enemy.**
 
@@ -37,7 +37,7 @@ src/core/       the engine: runs unchanged in browsers and Node
   frame.js        relay frames, envelopes, padding
   locks.js        riddles, capsules
   transfer.js     chunked file streaming + flow control
-  engine.js       Psst: handshakes, fan-out, messages, files — emits events
+  engine.js       Hush: handshakes, fan-out, messages, files — emits events
 src/relay/      hub.js (pure routing + limits), server.js (ws + static files)
 src/transport/  websocket.js, tabs.js + hub-worker.js (SharedWorker)
 web/            a thin UI over the engine
@@ -57,10 +57,10 @@ proves to the other side that both hold the same secret
 ### Use the engine directly
 
 ```js
-import { Psst, bytesSource } from './src/core/engine.js';
+import { Hush, bytesSource } from './src/core/engine.js';
 import { WebSocketTransport } from './src/transport/websocket.js';
 
-const p = new Psst({ transport: new WebSocketTransport('ws://localhost:8080/ws'), passphrase: 'lantern-otter-quartz-river', name: 'ada' });
+const p = new Hush({ transport: new WebSocketTransport('ws://localhost:8080/ws'), passphrase: 'lantern-otter-quartz-river', name: 'ada' });
 p.on('peer', (peer) => console.log(peer.name, peer.safetyWords));
 p.on('message', (m) => console.log(m.from, m.text));
 p.on('file-offer', (o) => p.acceptFile(o.fileId, { write: (b) => {}, close: () => {} }));
