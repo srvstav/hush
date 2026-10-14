@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>parley</title>
+  <meta name="description" content="End-to-end encrypted chat where the server is treated as the enemy.">
+  <link rel="icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main id="gate">
+    <h1>parley</h1>
+    <p class="lede">A room is a passphrase. Everyone who knows it can talk. The relay in the middle can't read a word — not even your names.</p>
+    <form id="join-form" autocomplete="off">
+      <label>passphrase
+        <span class="row"><input id="pass" required minlength="8" spellcheck="false"><button type="button" id="gen">new</button></span>
+      </label>
+      <label>your name <input id="name" maxlength="40" placeholder="anon"></label>
+      <label>relay
+        <select id="relay">
+          <option value="tabs">this browser — open a second tab to talk</option>
+          <option value="server">this server's relay</option>
+          <option value="custom">another relay (wss://…)</option>
+        </select>
+        <input id="relay-url" placeholder="wss://relay.example/ws" hidden>
+      </label>
+      <button id="join-btn">enter</button>
+      <p id="gate-status" class="status" role="status"></p>
+    </form>
+  </main>
+
+  <main id="room" hidden>
+    <aside>
+      <header>
+        <strong>room</strong> <code id="room-id"></code>
+        <button id="invite" title="Copy a link with the passphrase in the #fragment (never sent to any server)">invite link</button>
+        <button id="leave">leave</button>
+      </header>
+      <p class="hint">Read your safety words aloud to each person. If they match, nobody is in the middle.</p>
+      <ul id="peers"></ul>
+    </aside>
+    <section>
+      <ol id="log"></ol>
+      <form id="composer" autocomplete="off">
+        <div class="modes" role="radiogroup">
+          <label><input type="radio" name="mode" value="say" checked> say</label>
+          <label><input type="radio" name="mode" value="whisper"> whisper <small>burns</small></label>
+          <label><input type="radio" name="mode" value="shout"> SHOUT</label>
+          <label><input type="radio" name="mode" value="riddle"> riddle</label>
+          <label><input type="radio" name="mode" value="capsule"> capsule</label>
+        </div>
+        <div id="extra" class="row"></div>
+        <div class="row">
+          <textarea id="text" rows="2" placeholder="type, enter to send"></textarea>
+          <button>send</button>
+        </div>
+        <div class="row">
+          <label class="file-btn">send a file (any size)<input type="file" id="file" multiple hidden></label>
+          <button type="button" id="knock">knock</button>
+          <label class="live" title="They see your words as you type (still end-to-end encrypted)"><input type="checkbox" id="live"> type live</label>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

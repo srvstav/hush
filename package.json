@@ -1,0 +1,15 @@
+{
+  "name": "parley",
+  "version": "0.1.0",
+  "description": "End-to-end encrypted, ratcheting, file-streaming chat over WebSockets. The relay is treated as the enemy.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node src/relay/server.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

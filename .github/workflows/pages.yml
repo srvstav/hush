@@ -1,0 +1,34 @@
+# Runs the tests, then publishes the browser app to GitHub Pages.
+# On Pages there is no server: the app defaults to the in-browser relay (tabs talk via a SharedWorker),
+# or you can point it at any relay you run (`npm start` behind TLS) with "another relay (wss://…)".
+name: pages
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: pages, cancel-in-progress: true }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - name: assemble site (same layout the local server uses)
+        run: |
+          mkdir -p _site/src/relay
+          cp -r web/. _site/
+          cp -r src/core src/transport _site/src/
+          cp src/relay/hub.js _site/src/relay/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4
